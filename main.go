@@ -26,6 +26,9 @@ var db *sql.DB
 func main() {
 	router := gin.Default()
 	router.SetTrustedProxies(nil)
+	router.Static("/assets", "./client/dist/assets")
+	router.StaticFile("/", "./client/dist/index.html")
+
 	router.POST("/search", postQuery)
 
 	var err error
