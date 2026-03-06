@@ -4,8 +4,10 @@ import axios from 'axios';
 
 function App() {
     const [keys, setKeys] = useState(Array(26).fill(false));
-    const [query, setQuery] = useState(null);
+    const [query, setQuery] = useState('');
+    const [include, setInclude] = useState('');
     const [results, setResults] = useState([]);
+    const [error, setError] = useState('');
 
     function Key({ clicked, onKeyClick, display }) {
         return (
@@ -33,11 +35,23 @@ function App() {
         setQuery(e.target.value);
     }
 
+    function handleIncludeChange(e) {
+        setInclude(e.target.value);
+    }
+
     function keyIndexToLetter(index) {
         return "qwertyuiopasdfghjklzxcvbnm"[index]
     }
 
     function onSearch() {
+        const safeQuery = query.trim();
+        if (safeQuery.length < 5) {
+            setError('Groene letters moeten 5 tekens bevatten.');
+            setResults([]);
+            return;
+        }
+
+        setError('');
         const exclude = keys.map((value, index) => {
             if (value) {
                 return index;
@@ -48,10 +62,13 @@ function App() {
             .map(keyIndexToLetter).join()
 
         axios.post('/search', {
-            query: query,
-            exclude: exclude
+            query: safeQuery,
+            exclude: exclude,
+            include: include
         }).then(function(response) {
             setResults(response.data.results)
+        }).catch(function() {
+            setError('Zoeken mislukt. Controleer je invoer en probeer opnieuw.');
         })
     }
 
@@ -59,12 +76,16 @@ function App() {
         <div className="helper-box">
             <h1>Woordle helper</h1>
             <label>
-                Groene letters: <input onChange={handleQueryChange} />
+                Groene letters: <input className="boxed-input" maxLength="5" onChange={handleQueryChange} />
+            </label>
+            <label>
+                Gele letters: <input className="boxed-input" maxLength="5" onChange={handleIncludeChange} />
             </label>
             <div className="keyboard">
                 {keyButtons}
             </div>
             <button onClick={onSearch}>Zoeken</button>
+            {error && <div className="error">{error}</div>}
             <div className="results">
                 {resultsView}
             </div>

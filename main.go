@@ -15,6 +15,7 @@ import (
 type query struct {
 	Query   string `json:"query"`
 	Exclude string `json:"exclude"`
+	Include string `json:"include"`
 }
 
 type results struct {
@@ -153,8 +154,34 @@ func performQuery(q query) (results, error) {
 				word += w[i].String
 			}
 		}
-		r = append(r, word)
+		if includesRequiredLetters(word, q.Include) {
+			r = append(r, word)
+		}
 	}
 
 	return results{Results: r}, nil
+}
+
+func includesRequiredLetters(word string, include string) bool {
+	if include == "" {
+		return true
+	}
+
+	wordCounts := map[rune]int{}
+	for _, ch := range word {
+		wordCounts[ch]++
+	}
+
+	requiredCounts := map[rune]int{}
+	for _, ch := range include {
+		requiredCounts[ch]++
+	}
+
+	for ch, needed := range requiredCounts {
+		if wordCounts[ch] < needed {
+			return false
+		}
+	}
+
+	return true
 }
